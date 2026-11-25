@@ -452,3 +452,11 @@ textarea.field {
     padding: 20px 0;
   }
 }
+
+/* Reader notes on posts (CSS Custom Highlight API, see components/PostNotes.tsx) */
+::highlight(gt-notes) {
+  background-color: rgba(250, 204, 21, 0.35);
+}
+::highlight(gt-note-active) {
+  background-color: rgba(250, 204, 21, 0.75);
+}

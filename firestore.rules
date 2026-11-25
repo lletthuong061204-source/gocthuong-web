@@ -30,6 +30,26 @@ service cloud.firestore {
         && request.resource.data.savedAt is int;
     }
 
+    // Each reader's private notes on posts (select text → "Ghi chú"). Only the owner can see them.
+    match /users/{uid}/notes/{noteId} {
+      allow read, delete: if isUser(uid);
+      allow create: if isUser(uid) && validNote(request.resource.data);
+      allow update: if isUser(uid) && validNote(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["text", "updatedAt"]);
+    }
+    function validNote(d) {
+      return d.keys().hasOnly(["post", "lang", "quote", "prefix", "suffix", "start", "text", "createdAt", "updatedAt"])
+        && str(d.post, 1, 200)
+        && d.lang in ["vi", "en", "zh"]
+        && str(d.quote, 1, 1000)
+        && str(d.prefix, 0, 64)
+        && str(d.suffix, 0, 64)
+        && d.start is int && d.start >= 0
+        && str(d.text, 0, 2000)
+        && d.createdAt is int
+        && d.updatedAt is int;
+    }
+
     // Readers can send a resource for review and see the ones they sent. Only admins approve.
     match /resources/{id} {
       allow read: if request.auth != null && resource.data.submittedBy == request.auth.uid;

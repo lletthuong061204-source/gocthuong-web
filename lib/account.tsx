@@ -171,8 +171,8 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
     const l = lib.current;
     if (!l || !user) return;
     const { db } = l.fb();
-    const snap = await l.fs.getDocs(l.fs.collection(db, "users", user.uid, "saved"));
-    await Promise.all(snap.docs.map((d) => l.fs.deleteDoc(d.ref)));
+    const [snap, notes] = await Promise.all([l.fs.getDocs(l.fs.collection(db, "users", user.uid, "saved")), l.fs.getDocs(l.fs.collection(db, "users", user.uid, "notes"))]);
+    await Promise.all([...snap.docs, ...notes.docs].map((d) => l.fs.deleteDoc(d.ref)));
     await l.auth.deleteUser(user);
   }, [user]);
 
