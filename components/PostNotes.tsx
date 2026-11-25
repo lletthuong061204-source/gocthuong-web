@@ -4,7 +4,7 @@
 // Notes belong to the signed-in reader (users/{uid}/notes) and only they can see them.
 // Highlights use the CSS Custom Highlight API, so the article HTML is never modified.
 
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useAccount } from "@/lib/account";
 import { useToast } from "./Toast";
 
@@ -24,6 +24,9 @@ type Anchor = Pick<Note, "quote" | "prefix" | "suffix" | "start">;
 type Spot = { top: number; left: number };
 
 const CTX = 32;
+/** Margin comments (like Word) need this much room to the right of the article. */
+const CARD_W = 264;
+const CARD_GAP = 28;
 const LANG_LABEL: Record<string, string> = { vi: "VI", en: "EN", zh: "中文" };
 
 /* ---------- text ↔ DOM ranges ---------- */
@@ -123,6 +126,12 @@ export default function PostNotes({ slug, lang, title, rootRef, contentKey }: { 
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
   const ranges = useRef(new Map<string, Range>());
   const layer = useRef<HTMLDivElement | null>(null);
+  const cards = useRef(new Map<string, HTMLElement>());
+  const [wide, setWide] = useState(false);
+  const [pos, setPos] = useState<Record<string, { top: number; ax: number; ay: number }>>({});
+  const [, setTick] = useState(0);
+  const wideRef = useRef(false);
+  wideRef.current = wide;
 
   // Live list of this reader's notes on this post.
   useEffect(() => {
@@ -150,7 +159,7 @@ export default function PostNotes({ slug, lang, title, rootRef, contentKey }: { 
   const elsewhere = notes.length - here.length;
 
   // Re-anchor and paint highlights whenever the notes or the shown version change.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = rootRef.current;
     ranges.current.clear();
     if (!root) return;
@@ -163,6 +172,59 @@ export default function PostNotes({ slug, lang, title, rootRef, contentKey }: { 
     paint("gt-notes", [...ranges.current.values()]);
     return () => paint("gt-notes", []);
   }, [here, rootRef, contentKey]);
+
+  // Is there room for margin comments? Re-check on resize and when the article reflows.
+  useEffect(() => {
+    const root = rootRef.current;
+    const host = layer.current?.parentElement;
+    if (!root || !host) return;
+    const check = () => {
+      const z = zoom();
+      const right = host.getBoundingClientRect().right / z;
+      setWide(window.innerWidth / z - right >= CARD_GAP + CARD_W + 16);
+      setTick((t) => t + 1);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(root);
+    window.addEventListener("resize", check);
+    document.fonts?.ready.then(check).catch(() => {});
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", check);
+    };
+  }, [rootRef, contentKey]);
+
+  // Place each margin card next to its highlight without overlapping (Word-style).
+  useLayoutEffect(() => {
+    const host = layer.current?.parentElement;
+    if (!wide || !host) {
+      setPos((p) => (Object.keys(p).length ? {} : p));
+      return;
+    }
+    const z = zoom();
+    const h = host.getBoundingClientRect();
+    const items = here
+      .map((n) => {
+        const r = ranges.current.get(n.id);
+        if (!r) return null;
+        const rects = [...r.getClientRects()];
+        if (!rects.length) return null;
+        const first = rects[0];
+        const last = rects[rects.length - 1];
+        return { id: n.id, want: (first.top - h.top) / z - 6, ax: (last.right - h.left) / z, ay: (last.bottom - h.top) / z - 2 };
+      })
+      .filter((x): x is { id: string; want: number; ax: number; ay: number } => !!x)
+      .sort((a, b) => a.want - b.want);
+    const next: Record<string, { top: number; ax: number; ay: number }> = {};
+    let floor = -Infinity;
+    for (const it of items) {
+      const top = Math.max(it.want, floor);
+      next[it.id] = { top, ax: it.ax, ay: it.ay };
+      floor = top + (cards.current.get(it.id)?.offsetHeight ?? 96) + 12;
+    }
+    setPos((p) => (JSON.stringify(p) === JSON.stringify(next) ? p : next));
+  });
 
   // Stronger highlight on the note being looked at or written.
   useEffect(() => {
@@ -241,7 +303,7 @@ export default function PostNotes({ slug, lang, title, rootRef, contentKey }: { 
         try {
           if (r.comparePoint(node, offset) === 0) {
             setActive(id);
-            setPanel(true);
+            if (!wideRef.current) setPanel(true);
             return;
           }
         } catch {}
@@ -355,7 +417,7 @@ export default function PostNotes({ slug, lang, title, rootRef, contentKey }: { 
   return (
     <>
       {/* Positioned against the article column. */}
-      <div ref={layer} aria-hidden={!bubble && !composer} className="pointer-events-none absolute inset-0 z-20">
+      <div ref={layer} className="pointer-events-none absolute inset-0 z-20">
         {bubble && !composer && (
           <div
             role="toolbar"
@@ -382,8 +444,8 @@ export default function PostNotes({ slug, lang, title, rootRef, contentKey }: { 
               e.preventDefault();
               save();
             }}
-            style={{ top: composer.top }}
-            className="pointer-events-auto absolute right-0 left-0 mx-auto flex w-[min(420px,100%)] -translate-y-[calc(100%+12px)] flex-col gap-3 rounded-2xl border border-line bg-white p-4 text-base leading-normal shadow-xl"
+            style={wide ? { top: composer.top - 6, left: `calc(100% + ${CARD_GAP}px)`, width: CARD_W } : { top: composer.top }}
+            className={`pointer-events-auto absolute z-10 flex flex-col gap-3 rounded-2xl border border-line bg-white p-4 text-base leading-normal shadow-xl ${wide ? "" : "right-0 left-0 mx-auto w-[min(420px,100%)] -translate-y-[calc(100%+12px)]"}`}
           >
             <span className="font-mono text-xs tracking-[0.08em] text-muted">GHI CHÚ CHO ĐOẠN</span>
             <q className="line-clamp-3 font-serif text-lg italic leading-snug">{composer.quote.trim()}</q>
@@ -402,13 +464,81 @@ export default function PostNotes({ slug, lang, title, rootRef, contentKey }: { 
               className="field resize-y"
             />
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs text-muted">Chỉ mình bạn xem được · Ctrl+Enter để lưu</span>
+              <span className="text-xs text-muted">{wide ? "Chỉ mình bạn xem được" : "Chỉ mình bạn xem được · Ctrl+Enter để lưu"}</span>
               <span className="flex gap-2">
                 <button type="button" onClick={() => setComposer(null)} className="h-10 cursor-pointer rounded-full border-0 bg-transparent px-3 text-sm">Huỷ</button>
                 <button type="submit" disabled={busy} className="h-10 cursor-pointer rounded-full border-0 bg-ink px-5 text-sm font-semibold text-white disabled:opacity-60">{busy ? "Đang lưu…" : "Lưu"}</button>
               </span>
             </div>
           </form>
+        )}
+
+        {wide && (
+          <>
+            {active && pos[active] && !composer && (
+              <svg aria-hidden="true" className="pointer-events-none absolute top-0 left-0 overflow-visible" width="1" height="1">
+                <polyline
+                  points={`${pos[active].ax},${pos[active].ay} ${(layer.current?.offsetWidth ?? 0) + 10},${pos[active].ay} ${(layer.current?.offsetWidth ?? 0) + CARD_GAP},${pos[active].top + 20}`}
+                  fill="none"
+                  stroke="#C9A100"
+                  strokeWidth="1.5"
+                  strokeDasharray="4 3"
+                />
+              </svg>
+            )}
+            <ol aria-label="Ghi chú bên lề" className="m-0 list-none p-0">
+              {here.map((n) => {
+                const p = pos[n.id];
+                if (!p) return null;
+                const on = active === n.id;
+                return (
+                  <li
+                    key={n.id}
+                    ref={(el) => {
+                      if (el) cards.current.set(n.id, el);
+                      else cards.current.delete(n.id);
+                    }}
+                    onClick={() => setActive(n.id)}
+                    style={{ top: p.top, left: `calc(100% + ${CARD_GAP}px)`, width: CARD_W }}
+                    className={`pointer-events-auto absolute flex cursor-pointer flex-col gap-1.5 rounded-xl border bg-white px-3.5 py-3 text-left text-sm leading-relaxed transition-shadow ${on ? "z-10 border-ink shadow-lg" : "border-line shadow-sm hover:shadow-md"}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span aria-hidden="true" className="flex h-6 w-6 items-center justify-center rounded-full bg-ink font-serif text-xs text-white">{(user?.displayName || user?.email || "B").trim()[0]!.toUpperCase()}</span>
+                      <span className="flex-1 truncate text-xs font-semibold">{user?.displayName || "Bạn"}</span>
+                      <span className="text-[11px] text-muted">{fmt(n.updatedAt)}</span>
+                    </div>
+                    {editing?.id === n.id ? (
+                      <div className="flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
+                        <label className="sr-only" htmlFor={`m-edit-${n.id}`}>Sửa ghi chú</label>
+                        <textarea id={`m-edit-${n.id}`} autoFocus rows={3} maxLength={2000} className="field text-sm" value={editing.text} onChange={(e) => setEditing({ id: n.id, text: e.target.value })} />
+                        <span className="flex justify-end gap-1.5">
+                          <button type="button" onClick={() => setEditing(null)} className="h-8 cursor-pointer rounded-full border-0 bg-transparent px-3 text-xs">Huỷ</button>
+                          <button type="button" onClick={() => update(n.id, editing.text)} className="h-8 cursor-pointer rounded-full border-0 bg-ink px-3 text-xs font-semibold text-white">Lưu</button>
+                        </span>
+                      </div>
+                    ) : (
+                      <p className={`m-0 whitespace-pre-line ${n.text ? "" : "text-muted italic"} ${on ? "" : "line-clamp-4"}`}>{n.text || "Chưa có nội dung"}</p>
+                    )}
+                    {on && editing?.id !== n.id && (
+                      <div className="flex justify-end gap-1 pt-0.5" onClick={(e) => e.stopPropagation()}>
+                        {confirmDel === n.id ? (
+                          <>
+                            <button type="button" onClick={() => remove(n.id)} className="h-8 cursor-pointer rounded-full border-0 bg-ink px-3 text-xs text-white">Xoá</button>
+                            <button type="button" onClick={() => setConfirmDel(null)} className="h-8 cursor-pointer rounded-full border-0 bg-transparent px-2 text-xs">Giữ lại</button>
+                          </>
+                        ) : (
+                          <>
+                            <button type="button" onClick={() => setEditing({ id: n.id, text: n.text })} className="h-8 cursor-pointer rounded-full border-0 bg-transparent px-2.5 text-xs text-ink hover:bg-soft">Sửa</button>
+                            <button type="button" onClick={() => setConfirmDel(n.id)} className="h-8 cursor-pointer rounded-full border-0 bg-transparent px-2.5 text-xs text-ink hover:bg-soft">Xoá</button>
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </>
         )}
       </div>
 
