@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import Toc from "./Toc";
+import PostNotes from "./PostNotes";
 import { PostToolbar } from "./PostBits";
 import type { Heading } from "@/lib/markdown";
 import type { PostRef } from "@/content/posts";
@@ -40,6 +41,7 @@ export default function PostReader({
   const langs = all.filter((l) => l.available || ["vi", "en"].includes(l.id));
   const zh = v.id === "zh" ? "zh" : undefined;
   const toc = v.html ? v.headings : placeholderToc;
+  const body = useRef<HTMLDivElement | null>(null);
 
   return (
     <>
@@ -71,7 +73,13 @@ export default function PostReader({
           </aside>
         )}
         <div className="flex min-w-0 max-w-[700px] flex-[1_1_560px] flex-col gap-6 text-lg leading-[1.8]">
-          {v.html ? <div lang={zh} className="prose-gt" dangerouslySetInnerHTML={{ __html: v.html }} /> : placeholder}
+          <div className="relative">
+            <p className="m-0 mb-4 font-mono text-xs tracking-[0.06em] text-muted max-sm:hidden">Bôi đen một đoạn để ghi chú hoặc sao chép trích dẫn.</p>
+            <div ref={body} key={v.id} className="flex flex-col gap-6">
+              {v.html ? <div lang={zh} className="prose-gt" dangerouslySetInnerHTML={{ __html: v.html }} /> : placeholder}
+            </div>
+            <PostNotes slug={slug} lang={v.id} title={v.title} rootRef={body} contentKey={v.id} />
+          </div>
           {refs.length > 0 && <References refs={refs} className="border-t border-line pt-6 md:hidden" />}
           {children}
         </div>
