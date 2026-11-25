@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro, Cormorant_Garamond, JetBrains_Mono, Noto_Serif_SC } from "next/font/google";
 import { LangProvider } from "@/lib/i18n";
+import ScrollReset from "@/components/ScrollReset";
 import { site } from "@/content/site";
 import "./globals.css";
 
@@ -18,8 +19,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi" className={`${sans.variable} ${serif.variable} ${mono.variable} ${sc.variable}`}>
+    <html lang="vi" data-scroll-behavior="smooth" className={`${sans.variable} ${serif.variable} ${mono.variable} ${sc.variable}`}>
       <body>
+        <ScrollReset />
         <LangProvider>
           {children}
         </LangProvider>

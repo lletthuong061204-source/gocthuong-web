@@ -6,6 +6,7 @@ import { authMessage, useAccount } from "@/lib/account";
 import ShareResourceDialog from "./account/ShareResourceDialog";
 import { ArrowUpRight, Bookmark, Copy, Heart, Plus, Search } from "./icons";
 import { copyLink, useToast } from "./Toast";
+import Txt from "./Txt";
 
 export default function ResourcesBrowser() {
   const [f, setF] = useState("Tất cả");
@@ -63,8 +64,8 @@ export default function ResourcesBrowser() {
       <section className="wrap flex flex-wrap items-end justify-between gap-6 pt-7">
         <div className="flex flex-col gap-3.5">
           <p className="eyebrow">● {resources.length} TÀI LIỆU · {Object.keys(topics).length} CHỦ ĐỀ</p>
-          <h1 className="display">Tài nguyên chia sẻ</h1>
-          <p className="m-0 text-lg text-muted">Link và tài liệu chọn lọc cho BA, AI và người học ngôn ngữ.</p>
+          <Txt k="connect-title" as="h1" className="display" />
+          <Txt k="connect-sub" as="p" className="m-0 text-lg text-muted" />
         </div>
         <button type="button" onClick={share} className="inline-flex h-12 cursor-pointer items-center gap-2 rounded-xl border-0 bg-ink px-[22px] font-medium text-white">
           <Plus /> Chia sẻ tài liệu

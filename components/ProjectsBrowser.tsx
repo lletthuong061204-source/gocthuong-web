@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { projectFilters, projects } from "@/content/projects";
 import { Grid, List, Search } from "./icons";
+import Txt from "./Txt";
 
 export default function ProjectsBrowser() {
   const [f, setF] = useState("Tất cả");
@@ -28,9 +29,9 @@ export default function ProjectsBrowser() {
     <>
       <section className="wrap flex flex-wrap items-end justify-between gap-6 pt-7">
         <div className="flex flex-col gap-3.5">
-          <p className="eyebrow">● CASE STUDY BA &amp; AI</p>
-          <h1 className="display">Dự án</h1>
-          <p className="m-0 text-lg text-muted">Mỗi dự án: vấn đề, cách làm, kết quả đo được.</p>
+          <Txt k="projects-eyebrow" as="p" className="eyebrow" />
+          <Txt k="projects-title" as="h1" className="display" />
+          <Txt k="projects-sub" as="p" className="m-0 text-lg text-muted" />
         </div>
         <label className="search flex-[0_1_380px]">
           <Search />

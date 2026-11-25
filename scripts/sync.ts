@@ -95,11 +95,12 @@ const plain = (d: FirebaseFirestore.DocumentData) =>
   JSON.parse(JSON.stringify(d, (_k, v) => (v && typeof v === "object" && "_seconds" in v ? v._seconds * 1000 : v)));
 
 async function exportContent() {
-  const [posts, projects, resources, site] = await Promise.all([
+  const [posts, projects, resources, site, pages] = await Promise.all([
     db.collection("posts").where("status", "==", "published").get(),
     db.collection("projects").get(),
     db.collection("resources").where("status", "==", "approved").get(),
     db.doc("settings/site").get(),
+    db.doc("settings/pages").get(),
   ]);
   const out: Record<string, unknown> = {
     posts: posts.docs.map((d) => plain(d.data())),
@@ -111,6 +112,7 @@ async function exportContent() {
     }),
   };
   if (site.exists) out.site = plain(site.data()!);
+  if (pages.exists) out.pages = { fields: plain(pages.data()!).fields ?? {} };
   const json = JSON.stringify(out, null, 2);
   writeFileSync("content/remote.json", json);
   const hash = createHash("sha256").update(json).digest("hex").slice(0, 16);

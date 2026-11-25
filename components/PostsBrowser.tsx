@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { postFilters, posts, type Post } from "@/content/posts";
 import { Grid, Lines, List, Search } from "./icons";
+import Txt from "./Txt";
 
 const PAGE = 6;
 
@@ -37,9 +38,9 @@ export default function PostsBrowser() {
   return (
     <>
       <section className="wrap flex flex-col items-center gap-3.5 pt-7 text-center">
-        <p className="eyebrow">GHI CHÉP · BA · AI · NGÔN NGỮ</p>
-        <h1 className="display">Bài viết</h1>
-        <p className="m-0 text-lg text-muted">Bài học từ công việc BA, thử nghiệm AI và hành trình học ngôn ngữ.</p>
+        <Txt k="posts-eyebrow" as="p" className="eyebrow" />
+        <Txt k="posts-title" as="h1" className="display" />
+        <Txt k="posts-sub" as="p" className="m-0 text-lg text-muted" />
       </section>
 
       <section aria-label="Công cụ lọc" className="wrap flex flex-col gap-4 pt-10">
