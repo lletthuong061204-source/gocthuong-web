@@ -25,6 +25,7 @@ const nav = [
   { href: "/admin/bai-viet/", label: "Bài viết", icon: "doc", match: (p: string) => p.startsWith("/admin/bai-viet") },
   { href: "/admin/du-an/", label: "Dự án", icon: "case", match: (p: string) => p.startsWith("/admin/du-an") },
   { href: "/admin/tai-nguyen/", label: "Tài nguyên", icon: "link", match: (p: string) => p.startsWith("/admin/tai-nguyen") },
+  { href: "/admin/noi-dung-trang/", label: "Nội dung trang", icon: "text", match: (p: string) => p.startsWith("/admin/noi-dung-trang") },
 ];
 const nav2 = [{ href: "/admin/cai-dat/", label: "Cài đặt", icon: "gear", match: (p: string) => p.startsWith("/admin/cai-dat") }];
 
@@ -33,6 +34,7 @@ function Icon({ name }: { name: string }) {
   if (name === "grid") return <svg {...p}><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></svg>;
   if (name === "doc") return <svg {...p}><path d="M7 3h7l5 5v13H7z" /><path d="M14 3v5h5M10 13h6M10 17h6" /></svg>;
   if (name === "case") return <svg {...p}><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" /></svg>;
+  if (name === "text") return <svg {...p}><path d="M4 6V4h16v2M12 4v16M9 20h6" /></svg>;
   if (name === "link") return <svg {...p}><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg>;
   return <svg {...p}><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" /></svg>;
 }

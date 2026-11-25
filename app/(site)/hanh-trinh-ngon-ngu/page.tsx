@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Timeline, TranslationSamples } from "@/components/JourneyBits";
+import Txt from "@/components/Txt";
 import { channels, languages, roadmap } from "@/content/journey";
 
 export const metadata: Metadata = {
@@ -21,11 +22,9 @@ export default function JourneyPage() {
 
       <section className="wrap flex flex-wrap items-end justify-between gap-10 pt-7">
         <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-5">
-          <p className="eyebrow">● VI · EN · 中文 — TỪ BA ĐẾN PHIÊN DỊCH</p>
-          <h1 className="m-0 max-w-[17ch] font-serif text-[clamp(28px,4.8vw,54px)] leading-[1.05] font-medium">
-            BA phiên dịch giữa kinh doanh và công nghệ. Mình muốn phiên dịch cả giữa con người.
-          </h1>
-          <p className="m-0 max-w-[52ch] text-lg leading-relaxed text-muted">Lộ trình, tiến độ thật và sản phẩm thật — cập nhật mỗi khi mình đạt một mốc mới.</p>
+          <Txt k="journey-eyebrow" as="p" className="eyebrow" />
+          <Txt k="journey-title" as="h1" className="m-0 max-w-[17ch] font-serif text-[clamp(28px,4.8vw,54px)] leading-[1.05] font-medium" />
+          <Txt k="journey-sub" as="p" className="m-0 max-w-[52ch] text-lg leading-relaxed text-muted" />
         </div>
         <div id="kenh" className="flex flex-[1_1_300px] flex-col gap-2.5">
           <span className="font-mono text-xs tracking-[0.08em] text-muted">THEO DÕI SẢN PHẨM THẬT THEO NGÔN NGỮ</span>
@@ -109,8 +108,8 @@ export default function JourneyPage() {
       <section className="wrap pt-[72px]">
         <div className="flex flex-wrap items-center justify-between gap-6 rounded-[20px] bg-ink p-8 text-white sm:p-12">
           <div className="flex flex-col gap-2">
-            <h2 className="m-0 font-serif text-[clamp(28px,4vw,44px)] leading-[1.1] font-medium">Cần dịch tài liệu IT?</h2>
-            <p className="m-0 text-base text-[#BDBDBD]">BRD, user story, tài liệu sản phẩm · EN ⇄ VI ⇄ 中文</p>
+            <Txt k="journey-cta-title" as="h2" className="m-0 font-serif text-[clamp(28px,4vw,44px)] leading-[1.1] font-medium" />
+            <Txt k="journey-cta-sub" as="p" className="m-0 text-base text-[#BDBDBD]" />
           </div>
           <Link href="/#lien-he" className="btn btn-light font-semibold">Liên hệ</Link>
         </div>

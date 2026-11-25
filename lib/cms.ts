@@ -17,6 +17,7 @@ import type { PostDoc } from "@/content/posts";
 import type { Project } from "@/content/projects";
 import type { Resource } from "@/content/resources";
 import type { Site } from "@/content/site";
+import type { FieldValue } from "@/content/pages";
 
 export type WithId<T> = T & { id: string };
 
@@ -98,6 +99,17 @@ export const cms = {
       await setDoc(doc(fb().db, "settings", "site"), JSON.parse(JSON.stringify(s)));
       await touch("Cài đặt");
       await logActivity("Đã cập nhật cài đặt");
+    },
+  },
+  pages: {
+    get: async () => {
+      const d = await getDoc(doc(fb().db, "settings", "pages"));
+      return ((d.exists() ? d.data().fields : null) ?? {}) as Record<string, FieldValue>;
+    },
+    save: async (fields: Record<string, FieldValue>, pageLabel: string) => {
+      await setDoc(doc(fb().db, "settings", "pages"), { fields: JSON.parse(JSON.stringify(fields)), updatedAt: serverTimestamp() });
+      await touch(`Nội dung trang: ${pageLabel}`);
+      await logActivity(`Đã sửa chữ trên trang ${pageLabel}`);
     },
   },
   meta: async () => {
